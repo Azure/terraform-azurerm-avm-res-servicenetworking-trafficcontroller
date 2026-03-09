@@ -23,6 +23,76 @@ resource "azapi_resource" "this" {
 
 data "azapi_client_config" "this" {}
 
+resource "azapi_resource" "frontend" {
+  for_each = var.frontends
+
+  location  = var.location
+  name      = each.value.name
+  parent_id = azapi_resource.this.id
+  type      = "Microsoft.ServiceNetworking/trafficControllers/frontends@2025-01-01"
+  body = {
+    properties = {}
+  }
+  create_headers            = var.enable_telemetry ? { "User-Agent" : local.avm_azapi_header } : null
+  delete_headers            = var.enable_telemetry ? { "User-Agent" : local.avm_azapi_header } : null
+  read_headers              = var.enable_telemetry ? { "User-Agent" : local.avm_azapi_header } : null
+  response_export_values    = ["properties.fqdn"]
+  schema_validation_enabled = true
+  tags                      = var.tags
+  update_headers            = var.enable_telemetry ? { "User-Agent" : local.avm_azapi_header } : null
+}
+
+resource "azapi_resource" "association" {
+  for_each = var.associations
+
+  location  = var.location
+  name      = each.value.name
+  parent_id = azapi_resource.this.id
+  type      = "Microsoft.ServiceNetworking/trafficControllers/associations@2025-01-01"
+  body = {
+    properties = {
+      associationType = "subnets"
+      subnet = {
+        id = each.value.subnet_resource_id
+      }
+    }
+  }
+  create_headers            = var.enable_telemetry ? { "User-Agent" : local.avm_azapi_header } : null
+  delete_headers            = var.enable_telemetry ? { "User-Agent" : local.avm_azapi_header } : null
+  read_headers              = var.enable_telemetry ? { "User-Agent" : local.avm_azapi_header } : null
+  response_export_values    = ["properties.subnet"]
+  schema_validation_enabled = true
+  tags                      = var.tags
+  update_headers            = var.enable_telemetry ? { "User-Agent" : local.avm_azapi_header } : null
+
+  depends_on = [azapi_resource.frontend]
+}
+
+resource "azapi_resource" "security_policy" {
+  for_each = var.security_policies
+
+  location  = var.location
+  name      = each.value.name
+  parent_id = azapi_resource.this.id
+  type      = "Microsoft.ServiceNetworking/trafficControllers/securityPolicies@2025-01-01"
+  body = {
+    properties = {
+      wafPolicy = {
+        id = each.value.waf_policy_resource_id
+      }
+    }
+  }
+  create_headers            = var.enable_telemetry ? { "User-Agent" : local.avm_azapi_header } : null
+  delete_headers            = var.enable_telemetry ? { "User-Agent" : local.avm_azapi_header } : null
+  read_headers              = var.enable_telemetry ? { "User-Agent" : local.avm_azapi_header } : null
+  response_export_values    = []
+  schema_validation_enabled = true
+  tags                      = var.tags
+  update_headers            = var.enable_telemetry ? { "User-Agent" : local.avm_azapi_header } : null
+
+  depends_on = [azapi_resource.frontend, azapi_resource.association]
+}
+
 # required AVM resources interfaces
 resource "azurerm_management_lock" "this" {
   count = var.lock != null ? 1 : 0

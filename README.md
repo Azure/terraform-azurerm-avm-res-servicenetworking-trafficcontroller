@@ -43,6 +43,9 @@ The following requirements are needed by this module:
 
 The following resources are used by this module:
 
+- [azapi_resource.association](https://registry.terraform.io/providers/Azure/azapi/latest/docs/resources/resource) (resource)
+- [azapi_resource.frontend](https://registry.terraform.io/providers/Azure/azapi/latest/docs/resources/resource) (resource)
+- [azapi_resource.security_policy](https://registry.terraform.io/providers/Azure/azapi/latest/docs/resources/resource) (resource)
 - [azapi_resource.this](https://registry.terraform.io/providers/Azure/azapi/latest/docs/resources/resource) (resource)
 - [azurerm_management_lock.this](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/management_lock) (resource)
 - [azurerm_monitor_diagnostic_setting.this](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/monitor_diagnostic_setting) (resource)
@@ -79,6 +82,24 @@ Type: `string`
 ## Optional Inputs
 
 The following input variables are optional (have default values):
+
+### <a name="input_associations"></a> [associations](#input\_associations)
+
+Description: A map of associations to create on the Application Gateway for Containers. Associations link the Traffic Controller to a subnet. At this time, the number of associations is limited to 1.
+
+- `name` - (Required) The name of the association.
+- `subnet_resource_id` - (Required) The resource ID of the subnet to associate. The subnet must be delegated to `Microsoft.ServiceNetworking/trafficControllers`.
+
+Type:
+
+```hcl
+map(object({
+    name               = string
+    subnet_resource_id = string
+  }))
+```
+
+Default: `{}`
 
 ### <a name="input_diagnostic_settings"></a> [diagnostic\_settings](#input\_diagnostic\_settings)
 
@@ -123,6 +144,22 @@ If it is set to false, then no telemetry will be collected.
 Type: `bool`
 
 Default: `true`
+
+### <a name="input_frontends"></a> [frontends](#input\_frontends)
+
+Description: A map of frontends to create on the Application Gateway for Containers. Frontends expose an FQDN that can be used to route traffic.
+
+- `name` - (Required) The name of the frontend.
+
+Type:
+
+```hcl
+map(object({
+    name = string
+  }))
+```
+
+Default: `{}`
 
 ### <a name="input_lock"></a> [lock](#input\_lock)
 
@@ -174,6 +211,24 @@ map(object({
 
 Default: `{}`
 
+### <a name="input_security_policies"></a> [security\_policies](#input\_security\_policies)
+
+Description: A map of security policies to create on the Application Gateway for Containers.
+
+- `name` - (Required) The name of the security policy.
+- `waf_policy_resource_id` - (Required) The resource ID of the WAF policy to associate with this security policy.
+
+Type:
+
+```hcl
+map(object({
+    name                   = string
+    waf_policy_resource_id = string
+  }))
+```
+
+Default: `{}`
+
 ### <a name="input_tags"></a> [tags](#input\_tags)
 
 Description: (Optional) Tags of the resource.
@@ -186,6 +241,18 @@ Default: `null`
 
 The following outputs are exported:
 
+### <a name="output_associations"></a> [associations](#output\_associations)
+
+Description: The associations created on the Application Gateway for Containers.
+
+### <a name="output_configuration_endpoints"></a> [configuration\_endpoints](#output\_configuration\_endpoints)
+
+Description: The configuration endpoints of the Application Gateway for Containers.
+
+### <a name="output_frontends"></a> [frontends](#output\_frontends)
+
+Description: The frontends created on the Application Gateway for Containers.
+
 ### <a name="output_name"></a> [name](#output\_name)
 
 Description: The name of the Application Gateway for Containers (Traffic Controller).
@@ -197,6 +264,10 @@ Description: The Application Gateway for Containers (Traffic Controller) resourc
 ### <a name="output_resource_id"></a> [resource\_id](#output\_resource\_id)
 
 Description: The resource ID of the Application Gateway for Containers (Traffic Controller).
+
+### <a name="output_security_policies"></a> [security\_policies](#output\_security\_policies)
+
+Description: The security policies created on the Application Gateway for Containers.
 
 ## Modules
 

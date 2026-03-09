@@ -6,6 +6,10 @@ mock_provider "azapi" {
       output = {
         properties = {
           configurationEndpoints = ["test.trafficcontroller.azure.net"]
+          fqdn                   = "test-frontend.fqdn.trafficcontroller.azure.net"
+          subnet = {
+            id = "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/rg-test/providers/Microsoft.Network/virtualNetworks/vnet-test/subnets/subnet-test"
+          }
         }
       }
     }
@@ -69,6 +73,59 @@ run "apply_telemetry_disabled" {
   assert {
     condition     = length(modtm_telemetry.telemetry) == 0
     error_message = "Telemetry resource should not be created when enable_telemetry is false."
+  }
+}
+
+run "apply_with_frontend" {
+  command = apply
+
+  variables {
+    frontends = {
+      fe1 = {
+        name = "frontend-test"
+      }
+    }
+  }
+
+  assert {
+    condition     = length(azapi_resource.frontend) == 1
+    error_message = "One frontend should be created."
+  }
+}
+
+run "apply_with_association" {
+  command = apply
+
+  variables {
+    associations = {
+      assoc1 = {
+        name               = "assoc-test"
+        subnet_resource_id = "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/rg-test/providers/Microsoft.Network/virtualNetworks/vnet-test/subnets/subnet-test"
+      }
+    }
+  }
+
+  assert {
+    condition     = length(azapi_resource.association) == 1
+    error_message = "One association should be created."
+  }
+}
+
+run "apply_with_security_policy" {
+  command = apply
+
+  variables {
+    security_policies = {
+      waf1 = {
+        name                    = "waf-test"
+        waf_policy_resource_id = "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/rg-test/providers/Microsoft.Network/ApplicationGatewayWebApplicationFirewallPolicies/waf-policy-test"
+      }
+    }
+  }
+
+  assert {
+    condition     = length(azapi_resource.security_policy) == 1
+    error_message = "One security policy should be created."
   }
 }
 

@@ -20,6 +20,21 @@ variable "resource_group_name" {
   description = "The resource group where the resources will be deployed."
 }
 
+variable "associations" {
+  type = map(object({
+    name               = string
+    subnet_resource_id = string
+  }))
+  default     = {}
+  description = <<DESCRIPTION
+A map of associations to create on the Application Gateway for Containers. Associations link the Traffic Controller to a subnet. At this time, the number of associations is limited to 1.
+
+- `name` - (Required) The name of the association.
+- `subnet_resource_id` - (Required) The resource ID of the subnet to associate. The subnet must be delegated to `Microsoft.ServiceNetworking/trafficControllers`.
+DESCRIPTION
+  nullable    = false
+}
+
 variable "diagnostic_settings" {
   type = map(object({
     name                                     = optional(string, null)
@@ -76,6 +91,19 @@ DESCRIPTION
   nullable    = false
 }
 
+variable "frontends" {
+  type = map(object({
+    name = string
+  }))
+  default     = {}
+  description = <<DESCRIPTION
+A map of frontends to create on the Application Gateway for Containers. Frontends expose an FQDN that can be used to route traffic.
+
+- `name` - (Required) The name of the frontend.
+DESCRIPTION
+  nullable    = false
+}
+
 variable "lock" {
   type = object({
     kind = string
@@ -120,6 +148,21 @@ A map of role assignments to create on this resource. The map key is deliberatel
 - `principal_type` - The type of the principal_id. Possible values are `User`, `Group` and `ServicePrincipal`. Changing this forces a new resource to be created. It is necessary to explicitly set this attribute when creating role assignments if the principal creating the assignment is constrained by ABAC rules that filters on the PrincipalType attribute.
 
 > Note: only set `skip_service_principal_aad_check` to true if you are assigning a role to a service principal.
+DESCRIPTION
+  nullable    = false
+}
+
+variable "security_policies" {
+  type = map(object({
+    name                   = string
+    waf_policy_resource_id = string
+  }))
+  default     = {}
+  description = <<DESCRIPTION
+A map of security policies to create on the Application Gateway for Containers.
+
+- `name` - (Required) The name of the security policy.
+- `waf_policy_resource_id` - (Required) The resource ID of the WAF policy to associate with this security policy.
 DESCRIPTION
   nullable    = false
 }

@@ -74,7 +74,50 @@ module "test" {
   location            = azurerm_resource_group.this.location
   name                = module.naming.application_gateway.name_unique
   resource_group_name = azurerm_resource_group.this.name
-  enable_telemetry    = var.enable_telemetry # see variables.tf
+  associations = {
+    default = {
+      name               = "association-default"
+      subnet_resource_id = azapi_resource.subnet.id
+    }
+  }
+  enable_telemetry = var.enable_telemetry # see variables.tf
+  frontends = {
+    default = {
+      name = "frontend-default"
+    }
+  }
+}
+
+# Networking resources required for the association
+resource "azapi_resource" "vnet" {
+  location  = azurerm_resource_group.this.location
+  name      = module.naming.virtual_network.name_unique
+  parent_id = azurerm_resource_group.this.id
+  type      = "Microsoft.Network/virtualNetworks@2024-05-01"
+  body = {
+    properties = {
+      addressSpace = {
+        addressPrefixes = ["10.0.0.0/16"]
+      }
+    }
+  }
+}
+
+resource "azapi_resource" "subnet" {
+  name      = "subnet-agc"
+  parent_id = azapi_resource.vnet.id
+  type      = "Microsoft.Network/virtualNetworks/subnets@2024-05-01"
+  body = {
+    properties = {
+      addressPrefix = "10.0.1.0/24"
+      delegations = [{
+        name = "delegation"
+        properties = {
+          serviceName = "Microsoft.ServiceNetworking/trafficControllers"
+        }
+      }]
+    }
+  }
 }
 ```
 
@@ -95,6 +138,8 @@ The following requirements are needed by this module:
 
 The following resources are used by this module:
 
+- [azapi_resource.subnet](https://registry.terraform.io/providers/Azure/azapi/latest/docs/resources/resource) (resource)
+- [azapi_resource.vnet](https://registry.terraform.io/providers/Azure/azapi/latest/docs/resources/resource) (resource)
 - [azurerm_resource_group.this](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/resource_group) (resource)
 - [random_integer.region_index](https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/integer) (resource)
 

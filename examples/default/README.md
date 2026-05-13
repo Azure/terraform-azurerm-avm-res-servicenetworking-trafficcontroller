@@ -13,19 +13,11 @@ terraform {
       source  = "Azure/azapi"
       version = "~> 2.4"
     }
-    azurerm = {
-      source  = "hashicorp/azurerm"
-      version = "~> 4.0"
-    }
     random = {
       source  = "hashicorp/random"
       version = "~> 3.5"
     }
   }
-}
-
-provider "azurerm" {
-  features {}
 }
 
 provider "azapi" {}
@@ -60,9 +52,10 @@ module "naming" {
 }
 
 # This is required for resource modules
-resource "azurerm_resource_group" "this" {
+resource "azapi_resource" "rg" {
   location = local.selected_region
   name     = module.naming.resource_group.name_unique
+  type     = "Microsoft.Resources/resourceGroups@2024-03-01"
 }
 
 # This is the module call
@@ -71,9 +64,9 @@ module "test" {
 
   # source             = "Azure/avm-res-servicenetworking-trafficcontroller/azurerm"
   # version            = "..."
-  location            = azurerm_resource_group.this.location
-  name                = module.naming.application_gateway.name_unique
-  resource_group_name = azurerm_resource_group.this.name
+  location  = local.selected_region
+  name      = module.naming.application_gateway.name_unique
+  parent_id = azapi_resource.rg.id
   associations = {
     default = {
       name               = "association-default"
@@ -90,9 +83,9 @@ module "test" {
 
 # Networking resources required for the association
 resource "azapi_resource" "vnet" {
-  location  = azurerm_resource_group.this.location
+  location  = local.selected_region
   name      = module.naming.virtual_network.name_unique
-  parent_id = azurerm_resource_group.this.id
+  parent_id = azapi_resource.rg.id
   type      = "Microsoft.Network/virtualNetworks@2024-05-01"
   body = {
     properties = {
@@ -130,17 +123,15 @@ The following requirements are needed by this module:
 
 - <a name="requirement_azapi"></a> [azapi](#requirement\_azapi) (~> 2.4)
 
-- <a name="requirement_azurerm"></a> [azurerm](#requirement\_azurerm) (~> 4.0)
-
 - <a name="requirement_random"></a> [random](#requirement\_random) (~> 3.5)
 
 ## Resources
 
 The following resources are used by this module:
 
+- [azapi_resource.rg](https://registry.terraform.io/providers/Azure/azapi/latest/docs/resources/resource) (resource)
 - [azapi_resource.subnet](https://registry.terraform.io/providers/Azure/azapi/latest/docs/resources/resource) (resource)
 - [azapi_resource.vnet](https://registry.terraform.io/providers/Azure/azapi/latest/docs/resources/resource) (resource)
-- [azurerm_resource_group.this](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/resource_group) (resource)
 - [random_integer.region_index](https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/integer) (resource)
 
 <!-- markdownlint-disable MD013 -->

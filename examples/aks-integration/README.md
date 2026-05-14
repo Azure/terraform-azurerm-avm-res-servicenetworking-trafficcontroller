@@ -262,6 +262,33 @@ module "aks" {
 # -----------------------------------------------------------------------------
 # Application Gateway for Containers — via this module
 # -----------------------------------------------------------------------------
+# WAF Policy for Application Gateway for Containers
+# -----------------------------------------------------------------------------
+resource "azapi_resource" "waf_policy" {
+  location  = local.selected_region
+  name      = "waf-agc-${module.naming.application_gateway.name_unique}"
+  parent_id = azapi_resource.rg.id
+  type      = "Microsoft.Network/ApplicationGatewayWebApplicationFirewallPolicies@2024-05-01"
+  body = {
+    properties = {
+      policySettings = {
+        state                  = "Enabled"
+        mode                   = "Prevention"
+        requestBodyCheck       = true
+        maxRequestBodySizeInKb = 128
+        fileUploadLimitInMb    = 100
+      }
+      managedRules = {
+        managedRuleSets = [{
+          ruleSetType    = "Microsoft_DefaultRuleSet"
+          ruleSetVersion = "2.1"
+        }]
+      }
+    }
+  }
+}
+
+# -----------------------------------------------------------------------------
 module "agc" {
   source = "../../"
 
@@ -278,6 +305,12 @@ module "agc" {
   frontends = {
     web = {
       name = "frontend-web"
+    }
+  }
+  security_policies = {
+    waf = {
+      name                   = "secpol-waf"
+      waf_policy_resource_id = azapi_resource.waf_policy.id
     }
   }
 
@@ -316,6 +349,7 @@ The following resources are used by this module:
 - [azapi_resource.uami_aks](https://registry.terraform.io/providers/Azure/azapi/latest/docs/resources/resource) (resource)
 - [azapi_resource.uami_alb](https://registry.terraform.io/providers/Azure/azapi/latest/docs/resources/resource) (resource)
 - [azapi_resource.vnet](https://registry.terraform.io/providers/Azure/azapi/latest/docs/resources/resource) (resource)
+- [azapi_resource.waf_policy](https://registry.terraform.io/providers/Azure/azapi/latest/docs/resources/resource) (resource)
 - [random_integer.region_index](https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/integer) (resource)
 - [random_uuid.role_agc_config_manager](https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/uuid) (resource)
 - [random_uuid.role_aks_network_contributor](https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/uuid) (resource)

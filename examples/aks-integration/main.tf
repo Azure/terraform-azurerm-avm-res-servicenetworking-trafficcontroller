@@ -233,11 +233,6 @@ module "aks" {
     system_assigned            = false
     user_assigned_resource_ids = [azapi_resource.uami_aks.id]
   }
-  # Standard tier provides a financially-backed SLA (WAF reliability)
-  sku = {
-    name = "Base"
-    tier = "Standard"
-  }
   # Network configuration — Azure CNI
   network_profile = {
     network_plugin = "azure"
@@ -252,6 +247,11 @@ module "aks" {
     workload_identity = {
       enabled = true
     }
+  }
+  # Standard tier provides a financially-backed SLA (WAF reliability)
+  sku = {
+    name = "Base"
+    tier = "Standard"
   }
 
   depends_on = [azapi_resource.role_aks_network_contributor]

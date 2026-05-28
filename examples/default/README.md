@@ -111,6 +111,13 @@ resource "azapi_resource" "subnet" {
       }]
     }
   }
+  # The Application Gateway for Containers association keeps the subnet briefly
+  # "in use" after it is deleted; retry the subnet deletion until it is released.
+  retry = {
+    error_message_regex  = ["InUseSubnetCannotBeDeleted"]
+    interval_seconds     = 30
+    max_interval_seconds = 120
+  }
 }
 ```
 

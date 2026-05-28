@@ -101,6 +101,13 @@ resource "azapi_resource" "subnet_agc" {
       }]
     }
   }
+  # The Application Gateway for Containers association keeps the subnet briefly
+  # "in use" after it is deleted; retry the subnet deletion until it is released.
+  retry = {
+    error_message_regex  = ["InUseSubnetCannotBeDeleted"]
+    interval_seconds     = 30
+    max_interval_seconds = 120
+  }
 
   depends_on = [azapi_resource.subnet_aks]
 }
@@ -225,6 +232,11 @@ module "aks" {
   managed_identities = {
     system_assigned            = false
     user_assigned_resource_ids = [azapi_resource.uami_aks.id]
+  }
+  # Standard tier provides a financially-backed SLA (WAF reliability)
+  sku = {
+    name = "Base"
+    tier = "Standard"
   }
   # Network configuration — Azure CNI
   network_profile = {

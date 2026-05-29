@@ -24,14 +24,13 @@ mock_provider "azapi" {
   }
 }
 
-mock_provider "azurerm" {}
 mock_provider "modtm" {}
 mock_provider "random" {}
 
 variables {
-  location            = "eastus"
-  name                = "agc-test"
-  resource_group_name = "rg-test"
+  location  = "eastus"
+  name      = "agc-test"
+  parent_id = "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/rg-test"
 }
 
 run "apply_default" {
@@ -117,7 +116,7 @@ run "apply_with_security_policy" {
   variables {
     security_policies = {
       waf1 = {
-        name                    = "waf-test"
+        name                   = "waf-test"
         waf_policy_resource_id = "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/rg-test/providers/Microsoft.Network/ApplicationGatewayWebApplicationFirewallPolicies/waf-policy-test"
       }
     }

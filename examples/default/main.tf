@@ -6,19 +6,11 @@ terraform {
       source  = "Azure/azapi"
       version = "~> 2.4"
     }
-    azurerm = {
-      source  = "hashicorp/azurerm"
-      version = "~> 4.0"
-    }
     random = {
       source  = "hashicorp/random"
       version = "~> 3.5"
     }
   }
-}
-
-provider "azurerm" {
-  features {}
 }
 
 provider "azapi" {}
@@ -53,9 +45,10 @@ module "naming" {
 }
 
 # This is required for resource modules
-resource "azurerm_resource_group" "this" {
+resource "azapi_resource" "rg" {
   location = local.selected_region
   name     = module.naming.resource_group.name_unique
+  type     = "Microsoft.Resources/resourceGroups@2024-03-01"
 }
 
 # This is the module call
@@ -64,9 +57,9 @@ module "test" {
 
   # source             = "Azure/avm-res-servicenetworking-trafficcontroller/azurerm"
   # version            = "..."
-  location            = azurerm_resource_group.this.location
-  name                = module.naming.application_gateway.name_unique
-  resource_group_name = azurerm_resource_group.this.name
+  location  = local.selected_region
+  name      = module.naming.application_gateway.name_unique
+  parent_id = azapi_resource.rg.id
   associations = {
     default = {
       name               = "association-default"
@@ -83,9 +76,9 @@ module "test" {
 
 # Networking resources required for the association
 resource "azapi_resource" "vnet" {
-  location  = azurerm_resource_group.this.location
+  location  = local.selected_region
   name      = module.naming.virtual_network.name_unique
-  parent_id = azurerm_resource_group.this.id
+  parent_id = azapi_resource.rg.id
   type      = "Microsoft.Network/virtualNetworks@2024-05-01"
   body = {
     properties = {
@@ -110,5 +103,12 @@ resource "azapi_resource" "subnet" {
         }
       }]
     }
+  }
+  # The Application Gateway for Containers association keeps the subnet briefly
+  # "in use" after it is deleted; retry the subnet deletion until it is released.
+  retry = {
+    error_message_regex  = ["InUseSubnetCannotBeDeleted"]
+    interval_seconds     = 30
+    max_interval_seconds = 120
   }
 }

@@ -26,7 +26,7 @@ provider "azurerm" {
 ## Region selection — AG4C is available in limited regions
 module "regions" {
   source  = "Azure/avm-utl-regions/azurerm"
-  version = "0.11.0"
+  version = "0.12.0"
 }
 
 resource "random_integer" "region_index" {

@@ -40,7 +40,7 @@ provider "azurerm" {
 ## Region selection — AG4C is available in limited regions
 module "regions" {
   source  = "Azure/avm-utl-regions/azurerm"
-  version = "0.11.0"
+  version = "0.12.0"
 }
 
 resource "random_integer" "region_index" {
@@ -220,7 +220,7 @@ resource "azapi_resource" "role_aks_network_contributor" {
 # -----------------------------------------------------------------------------
 module "aks" {
   source  = "Azure/avm-res-containerservice-managedcluster/azurerm"
-  version = "0.5.4"
+  version = "0.6.6"
 
   location  = local.selected_region
   name      = module.naming.kubernetes_cluster.name_unique
@@ -425,7 +425,7 @@ Version:
 
 Source: Azure/avm-res-containerservice-managedcluster/azurerm
 
-Version: 0.5.4
+Version: 0.6.6
 
 ### <a name="module_naming"></a> [naming](#module\_naming)
 
@@ -437,7 +437,7 @@ Version: 0.4.3
 
 Source: Azure/avm-utl-regions/azurerm
 
-Version: 0.11.0
+Version: 0.12.0
 
 ## Post-deployment steps
 

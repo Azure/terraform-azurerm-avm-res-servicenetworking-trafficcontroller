@@ -8,7 +8,7 @@ terraform {
     }
     azurerm = {
       source  = "hashicorp/azurerm"
-      version = "~> 5.0"
+      version = "~> 4.0"
     }
     random = {
       source  = "hashicorp/random"
@@ -219,7 +219,7 @@ module "aks" {
   }
   # Default node pool
   default_agent_pool = {
-    vm_size             = "Standard_D4ds_v5"
+    vm_size             = "Standard_B2s_v2"
     os_sku              = "AzureLinux"
     vnet_subnet_id      = azapi_resource.subnet_aks.id
     enable_auto_scaling = true

@@ -8,7 +8,7 @@ terraform {
     }
     azurerm = {
       source  = "hashicorp/azurerm"
-      version = "~> 4.0"
+      version = "~> 5.1"
     }
     random = {
       source  = "hashicorp/random"
@@ -206,7 +206,7 @@ resource "azapi_resource" "role_aks_network_contributor" {
 # -----------------------------------------------------------------------------
 module "aks" {
   source  = "Azure/avm-res-containerservice-managedcluster/azurerm"
-  version = "0.7.1"
+  version = "0.8.1"
 
   location  = local.selected_region
   name      = module.naming.kubernetes_cluster.name_unique

@@ -165,7 +165,9 @@ resource "azapi_resource" "uami_aks" {
 }
 
 resource "random_uuid" "role_agc_config_manager" {}
+
 resource "random_uuid" "role_network_contributor" {}
+
 resource "random_uuid" "role_aks_network_contributor" {}
 
 # Role: AppGw for Containers Configuration Manager on the Resource Group

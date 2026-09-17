@@ -27,6 +27,8 @@ provider "azurerm" {
 module "regions" {
   source  = "Azure/avm-utl-regions/azurerm"
   version = "0.12.0"
+
+  enable_telemetry = false
 }
 
 resource "random_integer" "region_index" {
@@ -229,7 +231,7 @@ module "aks" {
     max_count           = 3
     count_of            = 1
   }
-  enable_telemetry = var.enable_telemetry
+  enable_telemetry = false
   # User-assigned identity required for VNet integration
   managed_identities = {
     system_assigned            = false
@@ -301,7 +303,7 @@ module "agc" {
       subnet_resource_id = azapi_resource.subnet_agc.id
     }
   }
-  enable_telemetry = var.enable_telemetry
+  enable_telemetry = false
   frontends = {
     web = {
       name = "frontend-web"

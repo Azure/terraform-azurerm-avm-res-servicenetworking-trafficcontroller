@@ -1,0 +1,10 @@
+{
+  "$schema": "https://raw.githubusercontent.com/Azure/azure-verified-modules-tools/main/src/Avm.Authoring/Resources/Schemas/v1/avm-module-metadata.schema.json",
+  "moduleDisplayName": "Application Gateway for Containers (Traffic Controller)",
+  "moduleDescription": "AVM Resource Module for Application Gateway for Containers (Traffic Controller)",
+  "canonicalType": "Microsoft.ServiceNetworking/trafficControllers",
+  "owners": [
+    "ethanjenkins1"
+  ],
+  "telemetryIdPrefix": "46d3xtrf.res.36b1edb"
+}

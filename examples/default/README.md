@@ -28,7 +28,7 @@ module "regions" {
   source  = "Azure/avm-utl-regions/azurerm"
   version = "0.12.0"
 
-  enable_telemetry = false
+  enable_telemetry = var.enable_telemetry
 }
 
 # This allows us to randomize the region for the resource group.
@@ -76,7 +76,7 @@ module "test" {
       subnet_resource_id = azapi_resource.subnet.id
     }
   }
-  enable_telemetry = false # see variables.tf
+  enable_telemetry = var.enable_telemetry # see variables.tf
   frontends = {
     default = {
       name = "frontend-default"
@@ -161,7 +161,7 @@ If it is set to false, then no telemetry will be collected.
 
 Type: `bool`
 
-Default: `true`
+Default: `false`
 
 ## Outputs
 

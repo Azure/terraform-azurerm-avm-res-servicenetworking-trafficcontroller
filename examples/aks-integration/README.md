@@ -224,7 +224,7 @@ resource "azapi_resource" "role_aks_network_contributor" {
 # -----------------------------------------------------------------------------
 module "aks" {
   source  = "Azure/avm-res-containerservice-managedcluster/azurerm"
-  version = "0.8.3"
+  version = "0.8.4"
 
   location  = local.selected_region
   name      = module.naming.kubernetes_cluster.name_unique
@@ -429,7 +429,7 @@ Version:
 
 Source: Azure/avm-res-containerservice-managedcluster/azurerm
 
-Version: 0.8.3
+Version: 0.8.4
 
 ### <a name="module_naming"></a> [naming](#module\_naming)
 

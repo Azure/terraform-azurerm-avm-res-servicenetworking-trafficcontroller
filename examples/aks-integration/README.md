@@ -229,7 +229,7 @@ resource "azapi_resource" "role_aks_network_contributor" {
 # -----------------------------------------------------------------------------
 module "aks" {
   source    = "Azure/avm-res-containerservice-managedcluster/azurerm"
-  version   = "0.8.4"
+  version   = "0.8.5"
   providers = { modtm = modtm }
 
   location  = local.selected_region
@@ -448,7 +448,7 @@ Version:
 
 Source: Azure/avm-res-containerservice-managedcluster/azurerm
 
-Version: 0.8.4
+Version: 0.8.5
 
 ### <a name="module_naming"></a> [naming](#module\_naming)
 

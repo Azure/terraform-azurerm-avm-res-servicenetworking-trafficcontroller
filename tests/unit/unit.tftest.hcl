@@ -24,7 +24,6 @@ mock_provider "azapi" {
   }
 }
 
-mock_provider "modtm" {}
 mock_provider "random" {}
 
 variables {
@@ -57,8 +56,12 @@ run "apply_default" {
   }
 
   assert {
-    condition     = can(modtm_telemetry.telemetry)
+    condition     = can(azapi_resource.telemetry)
     error_message = "Telemetry resource should be created when enable_telemetry is true (default)."
+  }
+  providers = {
+    azapi  = azapi
+    random = random
   }
 }
 
@@ -70,8 +73,12 @@ run "apply_telemetry_disabled" {
   }
 
   assert {
-    condition     = length(modtm_telemetry.telemetry) == 0
+    condition     = length(azapi_resource.telemetry) == 0
     error_message = "Telemetry resource should not be created when enable_telemetry is false."
+  }
+  providers = {
+    azapi  = azapi
+    random = random
   }
 }
 
@@ -89,6 +96,10 @@ run "apply_with_frontend" {
   assert {
     condition     = length(azapi_resource.frontend) == 1
     error_message = "One frontend should be created."
+  }
+  providers = {
+    azapi  = azapi
+    random = random
   }
 }
 
@@ -108,6 +119,10 @@ run "apply_with_association" {
     condition     = length(azapi_resource.association) == 1
     error_message = "One association should be created."
   }
+  providers = {
+    azapi  = azapi
+    random = random
+  }
 }
 
 run "apply_with_security_policy" {
@@ -126,6 +141,10 @@ run "apply_with_security_policy" {
     condition     = length(azapi_resource.security_policy) == 1
     error_message = "One security policy should be created."
   }
+  providers = {
+    azapi  = azapi
+    random = random
+  }
 }
 
 run "name_validation_valid" {
@@ -139,6 +158,10 @@ run "name_validation_valid" {
     condition     = azapi_resource.this.name == "my-agc.test_01"
     error_message = "Traffic Controller should accept valid name with hyphens, dots, and underscores."
   }
+  providers = {
+    azapi  = azapi
+    random = random
+  }
 }
 
 run "name_validation_invalid_start" {
@@ -151,6 +174,10 @@ run "name_validation_invalid_start" {
   expect_failures = [
     var.name
   ]
+  providers = {
+    azapi  = azapi
+    random = random
+  }
 }
 
 run "name_validation_invalid_end" {
@@ -163,4 +190,8 @@ run "name_validation_invalid_end" {
   expect_failures = [
     var.name
   ]
+  providers = {
+    azapi  = azapi
+    random = random
+  }
 }

@@ -4,11 +4,15 @@ terraform {
   required_providers {
     azapi = {
       source  = "Azure/azapi"
-      version = "~> 2.4"
+      version = "~> 2.12"
     }
     azurerm = {
       source  = "hashicorp/azurerm"
       version = "~> 4.0"
+    }
+    modtm = {
+      source  = "registry.terraform.io/azure/modtm"
+      version = "~> 0.3"
     }
     random = {
       source  = "hashicorp/random"
@@ -26,8 +30,9 @@ provider "azurerm" {
 ## Region selection — AG4C is available in limited regions
 module "regions" {
   source  = "Azure/avm-utl-regions/azurerm"
-  version = "0.12.0"
+  version = "0.13.0"
 
+  location         = var.location
   enable_telemetry = var.enable_telemetry
 }
 
@@ -45,8 +50,8 @@ locals {
 }
 
 module "naming" {
-  source  = "Azure/naming/azurerm"
-  version = "0.4.4"
+  source  = "Azure/avm-utl-naming/azure"
+  version = "0.2.0"
 }
 
 # -----------------------------------------------------------------------------
@@ -209,8 +214,9 @@ resource "azapi_resource" "role_aks_network_contributor" {
 # AKS Cluster — via AVM module
 # -----------------------------------------------------------------------------
 module "aks" {
-  source  = "Azure/avm-res-containerservice-managedcluster/azurerm"
-  version = "0.8.4"
+  source    = "Azure/avm-res-containerservice-managedcluster/azurerm"
+  version   = "0.8.4"
+  providers = { modtm = modtm }
 
   location  = local.selected_region
   name      = module.naming.kubernetes_cluster.name_unique
@@ -293,6 +299,9 @@ resource "azapi_resource" "waf_policy" {
 # -----------------------------------------------------------------------------
 module "agc" {
   source = "../../"
+  providers = {
+    azapi = azapi
+  }
 
   location  = local.selected_region
   name      = "agc-${module.naming.application_gateway.name_unique}"

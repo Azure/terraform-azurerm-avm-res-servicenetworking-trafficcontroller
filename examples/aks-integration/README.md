@@ -24,6 +24,7 @@ terraform {
       source  = "hashicorp/azurerm"
       version = "~> 4.0"
     }
+    # tflint-ignore: terraform_unused_required_providers
     modtm = {
       source  = "registry.terraform.io/azure/modtm"
       version = "~> 0.3"
@@ -228,9 +229,8 @@ resource "azapi_resource" "role_aks_network_contributor" {
 # AKS Cluster — via AVM module
 # -----------------------------------------------------------------------------
 module "aks" {
-  source    = "Azure/avm-res-containerservice-managedcluster/azurerm"
-  version   = "0.8.4"
-  providers = { modtm = modtm }
+  source  = "Azure/avm-res-containerservice-managedcluster/azurerm"
+  version = "0.8.4"
 
   location  = local.selected_region
   name      = module.naming.kubernetes_cluster.name_unique
@@ -313,9 +313,6 @@ resource "azapi_resource" "waf_policy" {
 # -----------------------------------------------------------------------------
 module "agc" {
   source = "../../"
-  providers = {
-    azapi = azapi
-  }
 
   location  = local.selected_region
   name      = "agc-${module.naming.application_gateway.name_unique}"

@@ -58,9 +58,6 @@ resource "azapi_resource" "rg" {
 # This is the module call
 module "test" {
   source = "../../"
-  providers = {
-    azapi = azapi
-  }
 
   # source             = "Azure/avm-res-servicenetworking-trafficcontroller/azurerm"
   # version            = "..."

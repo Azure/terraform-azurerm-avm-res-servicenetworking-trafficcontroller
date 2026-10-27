@@ -16,11 +16,12 @@ Application Gateway for Containers is an application (layer 7) load balancing an
 - Supports role assignments on the Traffic Controller resource.
 - Supports diagnostic settings for monitoring and logging.
 - Supports tags for resource organization.
+- Supports private frontends by disabling public network access on a frontend (see the [private frontend example](./examples/private-frontend/)).
 - Includes AVM telemetry integration.
 
 ## Usage
 
-For a basic deployment, see the [default example](./examples/default/).
+For a basic deployment, see the [default example](./examples/default/). To deploy a frontend with public network access disabled, see the [private frontend example](./examples/private-frontend/).
 
 > For more information, see the [Azure Application Gateway for Containers documentation](https://learn.microsoft.com/en-us/azure/application-gateway/for-containers/overview).
 
@@ -156,12 +157,16 @@ Default: `true`
 Description: A map of frontends to create on the Application Gateway for Containers. Frontends expose an FQDN that can be used to route traffic.
 
 - `name` - (Required) The name of the frontend.
+- `public_network_access` - (Optional) Whether public network access is allowed for the frontend. Possible values are `Enabled` (public frontend) and `Disabled` (private frontend), case-insensitive. When not set, the property is not sent and the service default (public frontend) applies. Setting this attribute deploys the frontend using API version `2026-03-01`. The service does not allow changing public network access of an existing frontend, so recreate the frontend (for example with `terraform apply -replace`) to switch between public and private.
+- `association_key` - (Optional) The key of the entry in `associations` that holds the subnet in which a private frontend is deployed. Required when `public_network_access` is `Disabled` and must not be set otherwise, because the service rejects public frontends that reference an association.
 
 Type:
 
 ```hcl
 map(object({
-    name = string
+    name                  = string
+    public_network_access = optional(string, null)
+    association_key       = optional(string, null)
   }))
 ```
 

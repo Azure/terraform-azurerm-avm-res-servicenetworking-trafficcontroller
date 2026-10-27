@@ -14,10 +14,11 @@ Application Gateway for Containers is an application (layer 7) load balancing an
 - Supports role assignments on the Traffic Controller resource.
 - Supports diagnostic settings for monitoring and logging.
 - Supports tags for resource organization.
+- Supports private frontends by disabling public network access on a frontend (see the [private frontend example](./examples/private-frontend/)).
 - Includes AVM telemetry integration.
 
 ## Usage
 
-For a basic deployment, see the [default example](./examples/default/).
+For a basic deployment, see the [default example](./examples/default/). To deploy a frontend with public network access disabled, see the [private frontend example](./examples/private-frontend/).
 
 > For more information, see the [Azure Application Gateway for Containers documentation](https://learn.microsoft.com/en-us/azure/application-gateway/for-containers/overview).

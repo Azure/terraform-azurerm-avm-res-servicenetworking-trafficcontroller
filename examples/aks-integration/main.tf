@@ -31,7 +31,7 @@ provider "azurerm" {
 ## Region selection — AG4C is available in limited regions
 module "regions" {
   source  = "Azure/avm-utl-regions/azurerm"
-  version = "0.13.0"
+  version = "0.13.2"
 
   location         = var.location
   enable_telemetry = var.enable_telemetry
@@ -52,7 +52,7 @@ locals {
 
 module "naming" {
   source  = "Azure/avm-utl-naming/azure"
-  version = "0.2.0"
+  version = "0.3.0"
 }
 
 # -----------------------------------------------------------------------------
@@ -216,7 +216,7 @@ resource "azapi_resource" "role_aks_network_contributor" {
 # -----------------------------------------------------------------------------
 module "aks" {
   source  = "Azure/avm-res-containerservice-managedcluster/azurerm"
-  version = "0.8.4"
+  version = "0.8.7"
 
   location  = local.selected_region
   name      = module.naming.kubernetes_cluster.name_unique

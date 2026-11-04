@@ -1,4 +1,4 @@
-# AVM Interfaces module for locks, role assignments, diagnostic settings, and managed identities
+# AVM Interfaces module for locks, role assignments, diagnostic settings, and private endpoints
 module "avm_interfaces" {
   source  = "Azure/avm-utl-interfaces/azure"
   version = "0.9.0"
@@ -7,6 +7,9 @@ module "avm_interfaces" {
   diagnostic_settings_v2                    = var.diagnostic_settings
   enable_telemetry                          = var.enable_telemetry
   lock                                      = var.lock
+  private_endpoints                         = var.private_endpoints
+  private_endpoints_manage_dns_zone_group   = var.private_endpoints_manage_dns_zone_group
+  private_endpoints_scope                   = azapi_resource.this.id
   role_assignment_definition_lookup_enabled = true
   role_assignment_definition_scope          = "/subscriptions/${data.azapi_client_config.this.subscription_id}"
   role_assignments                          = var.role_assignments
@@ -203,6 +206,111 @@ resource "azapi_resource" "diagnostic_setting" {
   type                   = each.value.type
   body                   = each.value.body
   ignore_null_property   = true
+  response_export_values = []
+  retry                  = var.retry
+
+  dynamic "timeouts" {
+    for_each = var.timeouts != null ? { this = var.timeouts } : {}
+
+    content {
+      create = timeouts.value.create
+      delete = timeouts.value.delete
+      read   = timeouts.value.read
+      update = timeouts.value.update
+    }
+  }
+}
+
+# Private Endpoints
+resource "azapi_resource" "private_endpoint" {
+  for_each = module.avm_interfaces.private_endpoints_azapi
+
+  location               = coalesce(var.private_endpoints[each.key].location, azapi_resource.this.location)
+  name                   = each.value.name
+  parent_id              = coalesce(var.private_endpoints[each.key].resource_group_name, azapi_resource.this.parent_id)
+  type                   = each.value.type
+  body                   = each.value.body
+  response_export_values = []
+  retry                  = var.retry
+  tags                   = each.value.tags
+
+  dynamic "timeouts" {
+    for_each = var.timeouts != null ? { this = var.timeouts } : {}
+
+    content {
+      create = timeouts.value.create
+      delete = timeouts.value.delete
+      read   = timeouts.value.read
+      update = timeouts.value.update
+    }
+  }
+
+  lifecycle {
+    precondition {
+      condition     = var.private_endpoints[each.key].subresource_name != null
+      error_message = "`private_endpoints[\"${each.key}\"].subresource_name` is required and must be the name of the private frontend."
+    }
+  }
+  # The private link sub resource is a frontend, which must exist before the private endpoint connects to it.
+  depends_on = [azapi_resource.frontend, azapi_resource.association]
+}
+
+resource "azapi_resource" "private_endpoint_dns_zone_group" {
+  for_each = module.avm_interfaces.private_dns_zone_groups_azapi
+
+  name                   = each.value.name
+  parent_id              = azapi_resource.private_endpoint[each.key].id
+  type                   = each.value.type
+  body                   = each.value.body
+  response_export_values = []
+  retry                  = var.retry
+
+  dynamic "timeouts" {
+    for_each = var.timeouts != null ? { this = var.timeouts } : {}
+
+    content {
+      create = timeouts.value.create
+      delete = timeouts.value.delete
+      read   = timeouts.value.read
+      update = timeouts.value.update
+    }
+  }
+}
+
+resource "azapi_resource" "private_endpoint_lock" {
+  for_each = module.avm_interfaces.lock_private_endpoint_azapi
+
+  name                   = each.value.name
+  parent_id              = azapi_resource.private_endpoint[each.value.pe_key].id
+  type                   = each.value.type
+  body                   = each.value.body
+  response_export_values = []
+  retry                  = var.retry
+
+  dynamic "timeouts" {
+    for_each = var.timeouts != null ? { this = var.timeouts } : {}
+
+    content {
+      create = timeouts.value.create
+      delete = timeouts.value.delete
+      read   = timeouts.value.read
+      update = timeouts.value.update
+    }
+  }
+
+  depends_on = [
+    azapi_resource.private_endpoint_dns_zone_group,
+    azapi_resource.private_endpoint_role_assignment
+  ]
+}
+
+resource "azapi_resource" "private_endpoint_role_assignment" {
+  for_each = module.avm_interfaces.role_assignments_private_endpoint_azapi
+
+  name                   = each.value.name
+  parent_id              = azapi_resource.private_endpoint[each.value.pe_key].id
+  type                   = each.value.type
+  body                   = each.value.body
   response_export_values = []
   retry                  = var.retry
 

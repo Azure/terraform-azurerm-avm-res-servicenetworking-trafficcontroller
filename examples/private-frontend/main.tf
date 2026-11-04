@@ -78,6 +78,14 @@ module "test" {
       association_key       = "default"
     }
   }
+  private_endpoints = {
+    private = {
+      name                          = "pep-${module.naming.application_gateway.name_unique}"
+      subnet_resource_id            = azapi_resource.private_endpoint_subnet.id
+      subresource_name              = "frontend-private"
+      private_dns_zone_resource_ids = [azapi_resource.private_dns_zone.id]
+    }
+  }
 }
 
 # Networking resources required for the association
@@ -116,5 +124,47 @@ resource "azapi_resource" "subnet" {
     error_message_regex  = ["InUseSubnetCannotBeDeleted"]
     interval_seconds     = 30
     max_interval_seconds = 120
+  }
+}
+
+# The private endpoint is deployed into its own subnet, created after the association subnet because subnets in a
+# virtual network cannot be created concurrently.
+resource "azapi_resource" "private_endpoint_subnet" {
+  name      = "subnet-pep"
+  parent_id = azapi_resource.vnet.id
+  type      = "Microsoft.Network/virtualNetworks/subnets@2024-05-01"
+  body = {
+    properties = {
+      addressPrefix = "10.0.2.0/24"
+    }
+  }
+  retry = {
+    error_message_regex  = ["InUseSubnetCannotBeDeleted"]
+    interval_seconds     = 30
+    max_interval_seconds = 120
+  }
+
+  depends_on = [azapi_resource.subnet]
+}
+
+resource "azapi_resource" "private_dns_zone" {
+  location  = "global"
+  name      = "privatelink.alb.azure.com"
+  parent_id = azapi_resource.rg.id
+  type      = "Microsoft.Network/privateDnsZones@2024-06-01"
+}
+
+resource "azapi_resource" "private_dns_zone_vnet_link" {
+  location  = "global"
+  name      = "link-${module.naming.virtual_network.name_unique}"
+  parent_id = azapi_resource.private_dns_zone.id
+  type      = "Microsoft.Network/privateDnsZones/virtualNetworkLinks@2024-06-01"
+  body = {
+    properties = {
+      registrationEnabled = false
+      virtualNetwork = {
+        id = azapi_resource.vnet.id
+      }
+    }
   }
 }

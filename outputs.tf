@@ -30,6 +30,16 @@ output "name" {
   value       = azapi_resource.this.name
 }
 
+output "private_endpoints" {
+  description = "The private endpoints created on the Application Gateway for Containers."
+  value = {
+    for k, v in azapi_resource.private_endpoint : k => {
+      name        = v.name
+      resource_id = v.id
+    }
+  }
+}
+
 output "resource" {
   description = "The Application Gateway for Containers (Traffic Controller) resource."
   value       = azapi_resource.this

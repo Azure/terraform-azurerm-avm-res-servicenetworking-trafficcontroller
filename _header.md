@@ -15,6 +15,7 @@ Application Gateway for Containers is an application (layer 7) load balancing an
 - Supports diagnostic settings for monitoring and logging.
 - Supports tags for resource organization.
 - Supports private frontends by disabling public network access on a frontend (see the [private frontend example](./examples/private-frontend/)).
+- Supports private endpoints for private frontends through the standard `private_endpoints` interface. Set `subresource_name` to the name of the private frontend.
 - Includes AVM telemetry integration.
 
 ## Usage

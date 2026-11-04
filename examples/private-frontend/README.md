@@ -4,6 +4,8 @@
 
 This deploys the module with a private frontend by disabling public network access (`public_network_access = "Disabled"`). A private frontend is deployed into the subnet of the association selected with `association_key`, and its FQDN resolves through `privatelink.alb.azure.com`.
 
+It also uses the `private_endpoints` interface to create a private endpoint for the private frontend. The `subresource_name` of the private endpoint is the name of the private frontend, and the endpoint is registered in a `privatelink.alb.azure.com` private DNS zone linked to the virtual network.
+
 ```hcl
 terraform {
   required_version = "~> 1.9"
@@ -85,6 +87,14 @@ module "test" {
       association_key       = "default"
     }
   }
+  private_endpoints = {
+    private = {
+      name                          = "pep-${module.naming.application_gateway.name_unique}"
+      subnet_resource_id            = azapi_resource.private_endpoint_subnet.id
+      subresource_name              = "frontend-private"
+      private_dns_zone_resource_ids = [azapi_resource.private_dns_zone.id]
+    }
+  }
 }
 
 # Networking resources required for the association
@@ -125,6 +135,48 @@ resource "azapi_resource" "subnet" {
     max_interval_seconds = 120
   }
 }
+
+# The private endpoint is deployed into its own subnet, created after the association subnet because subnets in a
+# virtual network cannot be created concurrently.
+resource "azapi_resource" "private_endpoint_subnet" {
+  name      = "subnet-pep"
+  parent_id = azapi_resource.vnet.id
+  type      = "Microsoft.Network/virtualNetworks/subnets@2024-05-01"
+  body = {
+    properties = {
+      addressPrefix = "10.0.2.0/24"
+    }
+  }
+  retry = {
+    error_message_regex  = ["InUseSubnetCannotBeDeleted"]
+    interval_seconds     = 30
+    max_interval_seconds = 120
+  }
+
+  depends_on = [azapi_resource.subnet]
+}
+
+resource "azapi_resource" "private_dns_zone" {
+  location  = "global"
+  name      = "privatelink.alb.azure.com"
+  parent_id = azapi_resource.rg.id
+  type      = "Microsoft.Network/privateDnsZones@2024-06-01"
+}
+
+resource "azapi_resource" "private_dns_zone_vnet_link" {
+  location  = "global"
+  name      = "link-${module.naming.virtual_network.name_unique}"
+  parent_id = azapi_resource.private_dns_zone.id
+  type      = "Microsoft.Network/privateDnsZones/virtualNetworkLinks@2024-06-01"
+  body = {
+    properties = {
+      registrationEnabled = false
+      virtualNetwork = {
+        id = azapi_resource.vnet.id
+      }
+    }
+  }
+}
 ```
 
 <!-- markdownlint-disable MD033 -->
@@ -142,6 +194,9 @@ The following requirements are needed by this module:
 
 The following resources are used by this module:
 
+- [azapi_resource.private_dns_zone](https://registry.terraform.io/providers/Azure/azapi/latest/docs/resources/resource) (resource)
+- [azapi_resource.private_dns_zone_vnet_link](https://registry.terraform.io/providers/Azure/azapi/latest/docs/resources/resource) (resource)
+- [azapi_resource.private_endpoint_subnet](https://registry.terraform.io/providers/Azure/azapi/latest/docs/resources/resource) (resource)
 - [azapi_resource.rg](https://registry.terraform.io/providers/Azure/azapi/latest/docs/resources/resource) (resource)
 - [azapi_resource.subnet](https://registry.terraform.io/providers/Azure/azapi/latest/docs/resources/resource) (resource)
 - [azapi_resource.vnet](https://registry.terraform.io/providers/Azure/azapi/latest/docs/resources/resource) (resource)

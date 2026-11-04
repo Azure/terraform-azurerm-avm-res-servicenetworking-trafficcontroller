@@ -401,3 +401,70 @@ run "name_validation_invalid_end" {
     random = random
   }
 }
+
+run "private_endpoint_with_dns_zone_group" {
+  command = apply
+
+  variables {
+    associations = {
+      default = {
+        name               = "assoc-test"
+        subnet_resource_id = "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/rg-test/providers/Microsoft.Network/virtualNetworks/vnet-test/subnets/subnet-test"
+      }
+    }
+    frontends = {
+      private = {
+        name                  = "frontend-private"
+        public_network_access = "Disabled"
+        association_key       = "default"
+      }
+    }
+    private_endpoints = {
+      private = {
+        name                          = "pep-test"
+        subnet_resource_id            = "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/rg-test/providers/Microsoft.Network/virtualNetworks/vnet-test/subnets/subnet-pep"
+        subresource_name              = "frontend-private"
+        private_dns_zone_resource_ids = ["/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/rg-test/providers/Microsoft.Network/privateDnsZones/privatelink.alb.azure.com"]
+      }
+    }
+  }
+
+  assert {
+    condition     = azapi_resource.private_endpoint["private"].name == "pep-test"
+    error_message = "Private endpoint should be created with the requested name."
+  }
+
+  assert {
+    condition     = azapi_resource.private_endpoint["private"].body.properties.privateLinkServiceConnections[0].properties.groupIds == ["frontend-private"]
+    error_message = "Private endpoint should target the private frontend as the private link sub resource."
+  }
+
+  assert {
+    condition     = length(azapi_resource.private_endpoint_dns_zone_group) == 1
+    error_message = "A private DNS zone group should be created for the private endpoint."
+  }
+  providers = {
+    azapi  = azapi
+    random = random
+  }
+}
+
+run "private_endpoint_requires_subresource_name" {
+  command = plan
+
+  variables {
+    private_endpoints = {
+      private = {
+        subnet_resource_id = "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/rg-test/providers/Microsoft.Network/virtualNetworks/vnet-test/subnets/subnet-pep"
+      }
+    }
+  }
+
+  expect_failures = [
+    azapi_resource.private_endpoint["private"]
+  ]
+  providers = {
+    azapi  = azapi
+    random = random
+  }
+}

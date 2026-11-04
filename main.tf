@@ -51,13 +51,19 @@ resource "azapi_resource" "frontend" {
   location  = var.location
   name      = each.value.name
   parent_id = azapi_resource.this.id
-  type      = "Microsoft.ServiceNetworking/trafficControllers/frontends@2025-01-01"
+  # publicNetworkAccess and association are only available from API version 2026-03-01. Frontends that do not set
+  # `public_network_access` keep using 2025-01-01 so existing deployments are unchanged.
+  type = each.value.public_network_access == null ? "Microsoft.ServiceNetworking/trafficControllers/frontends@2025-01-01" : "Microsoft.ServiceNetworking/trafficControllers/frontends@2026-03-01"
   body = {
-    properties = {}
+    properties = merge(
+      each.value.public_network_access == null ? {} : { publicNetworkAccess = lower(each.value.public_network_access) },
+      each.value.association_key == null ? {} : { association = { id = azapi_resource.association[each.value.association_key].id } }
+    )
   }
-  response_export_values    = ["properties.fqdn"]
-  retry                     = var.retry
-  schema_validation_enabled = true
+  response_export_values = ["properties.fqdn"]
+  retry                  = var.retry
+  # The AzAPI embedded schema does not include ServiceNetworking API version 2026-03-01 yet.
+  schema_validation_enabled = each.value.public_network_access == null
   tags                      = var.tags
 
   dynamic "timeouts" {
@@ -102,8 +108,6 @@ resource "azapi_resource" "association" {
       update = timeouts.value.update
     }
   }
-
-  depends_on = [azapi_resource.frontend]
 }
 
 resource "azapi_resource" "security_policy" {

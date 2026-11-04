@@ -103,6 +103,212 @@ run "apply_with_frontend" {
   }
 }
 
+run "frontend_default_keeps_current_api_version" {
+  command = apply
+
+  variables {
+    frontends = {
+      fe1 = {
+        name = "frontend-test"
+      }
+    }
+  }
+
+  assert {
+    condition     = azapi_resource.frontend["fe1"].type == "Microsoft.ServiceNetworking/trafficControllers/frontends@2025-01-01"
+    error_message = "Frontends without public_network_access should keep API version 2025-01-01."
+  }
+
+  assert {
+    condition     = length(azapi_resource.frontend["fe1"].body.properties) == 0
+    error_message = "Frontends without public_network_access should not send any properties."
+  }
+
+  assert {
+    condition     = azapi_resource.frontend["fe1"].schema_validation_enabled == true
+    error_message = "Schema validation should stay enabled for frontends using API version 2025-01-01."
+  }
+  providers = {
+    azapi  = azapi
+    random = random
+  }
+}
+
+run "frontend_public_network_access_enabled" {
+  command = apply
+
+  variables {
+    frontends = {
+      fe1 = {
+        name                  = "frontend-test"
+        public_network_access = "Enabled"
+      }
+    }
+  }
+
+  assert {
+    condition     = azapi_resource.frontend["fe1"].type == "Microsoft.ServiceNetworking/trafficControllers/frontends@2026-03-01"
+    error_message = "Frontends with public_network_access should use API version 2026-03-01."
+  }
+
+  assert {
+    condition     = azapi_resource.frontend["fe1"].body.properties.publicNetworkAccess == "enabled"
+    error_message = "publicNetworkAccess should be sent as the lower case value enabled."
+  }
+
+  assert {
+    condition     = !can(azapi_resource.frontend["fe1"].body.properties.association)
+    error_message = "A public frontend must not reference an association."
+  }
+  providers = {
+    azapi  = azapi
+    random = random
+  }
+}
+
+run "frontend_public_network_access_disabled" {
+  command = apply
+
+  variables {
+    associations = {
+      assoc1 = {
+        name               = "assoc-test"
+        subnet_resource_id = "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/rg-test/providers/Microsoft.Network/virtualNetworks/vnet-test/subnets/subnet-test"
+      }
+    }
+    frontends = {
+      fe1 = {
+        name                  = "frontend-private"
+        public_network_access = "Disabled"
+        association_key       = "assoc1"
+      }
+      fe2 = {
+        name = "frontend-public"
+      }
+    }
+  }
+
+  assert {
+    condition     = azapi_resource.frontend["fe1"].type == "Microsoft.ServiceNetworking/trafficControllers/frontends@2026-03-01"
+    error_message = "A private frontend should use API version 2026-03-01."
+  }
+
+  assert {
+    condition     = azapi_resource.frontend["fe1"].body.properties.publicNetworkAccess == "disabled"
+    error_message = "publicNetworkAccess should be sent as the lower case value disabled."
+  }
+
+  assert {
+    condition     = azapi_resource.frontend["fe1"].body.properties.association.id == azapi_resource.association["assoc1"].id
+    error_message = "The private frontend should reference the association selected by association_key."
+  }
+
+  assert {
+    condition     = azapi_resource.frontend["fe1"].schema_validation_enabled == false
+    error_message = "Schema validation should be disabled for API version 2026-03-01, which is not in the AzAPI embedded schema."
+  }
+
+  assert {
+    condition     = azapi_resource.frontend["fe2"].type == "Microsoft.ServiceNetworking/trafficControllers/frontends@2025-01-01" && length(azapi_resource.frontend["fe2"].body.properties) == 0
+    error_message = "A frontend without public_network_access in the same map should be unchanged."
+  }
+  providers = {
+    azapi  = azapi
+    random = random
+  }
+}
+
+run "frontend_private_requires_association_key" {
+  command = plan
+
+  variables {
+    frontends = {
+      fe1 = {
+        name                  = "frontend-private"
+        public_network_access = "Disabled"
+      }
+    }
+  }
+
+  expect_failures = [
+    var.frontends
+  ]
+  providers = {
+    azapi  = azapi
+    random = random
+  }
+}
+
+run "frontend_public_rejects_association_key" {
+  command = plan
+
+  variables {
+    associations = {
+      assoc1 = {
+        name               = "assoc-test"
+        subnet_resource_id = "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/rg-test/providers/Microsoft.Network/virtualNetworks/vnet-test/subnets/subnet-test"
+      }
+    }
+    frontends = {
+      fe1 = {
+        name                  = "frontend-public"
+        public_network_access = "Enabled"
+        association_key       = "assoc1"
+      }
+    }
+  }
+
+  expect_failures = [
+    var.frontends
+  ]
+  providers = {
+    azapi  = azapi
+    random = random
+  }
+}
+
+run "frontend_association_key_must_exist" {
+  command = plan
+
+  variables {
+    frontends = {
+      fe1 = {
+        name                  = "frontend-private"
+        public_network_access = "Disabled"
+        association_key       = "missing"
+      }
+    }
+  }
+
+  expect_failures = [
+    var.frontends
+  ]
+  providers = {
+    azapi  = azapi
+    random = random
+  }
+}
+
+run "frontend_public_network_access_invalid" {
+  command = plan
+
+  variables {
+    frontends = {
+      fe1 = {
+        name                  = "frontend-test"
+        public_network_access = "Maybe"
+      }
+    }
+  }
+
+  expect_failures = [
+    var.frontends
+  ]
+  providers = {
+    azapi  = azapi
+    random = random
+  }
+}
 run "apply_with_association" {
   command = apply
 

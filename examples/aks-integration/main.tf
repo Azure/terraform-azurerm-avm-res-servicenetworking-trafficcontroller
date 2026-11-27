@@ -26,7 +26,7 @@ provider "azurerm" {
 ## Region selection — AG4C is available in limited regions
 module "regions" {
   source  = "Azure/avm-utl-regions/azurerm"
-  version = "0.13.2"
+  version = "0.15.0"
 
   location         = var.location
   enable_telemetry = var.enable_telemetry
